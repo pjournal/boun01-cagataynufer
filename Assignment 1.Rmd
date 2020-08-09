@@ -1,0 +1,37 @@
+---
+title: "Assignment 1"
+author: "Çağatay Nüfer"
+date: "09 08 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+I'm an industrial engineerin student at Boğaziçi University. My accomplishments and goals in data science are driven by my pure interest in arranging, rearranging, altering, transforming, and tinkering with information to reach a practical and useful set of tools. I've used the programming language R with many previous projects and my goal is to discover more about data science to manage my own business some day.
+https://www.linkedin.com/in/cagataynufer/
+
+# useR! 2020: Keynote - Computational Reproducibility, from Theory to Practice  
+
+The main purpose of the project is to come up with a tangible way to measure reproducibility. As the presentor states, does a falling tree make a sound if nobody is there to hear it? To calculate reproducibility, the researcher uses Rstudio and Docker. In Rstudio, the researcher uses rrtools package to plot, add descriptive values, and eliminate dependiencies in the working environment. Transparency for example, is a factor to be considered during the calculation. Docker is an interactive user platform for the team to share data and collect data from the other users in the platform whom might uploaded relevant data to the project.
+
+[Computational Reproducibility](https://www.youtube.com/watch?v=KHMW8fV2NXo)
+
+# Social Network Analysis with R
+
+In the video, the presentor points ot how to create a network with multiple users connecting with each other. Much like Operations Research topics, the users are connected to each other with nodes. The nodes and individuals are created by the igraph package in R. Their closeness is calculated by how many friends or followers they have in common, the communities they go in common, and the pages they follow in common. This is done by creating a matrix in Rstudio and assigning each node a score of the common values they share. Betweenness, closeness and such are special built functions in use to calculate commonness. After the nodes are assigned, the network is created with each individual using a different platform. The values of nodes are shown by histograms in graphs. After the network process is complete, one can point out the communities the users belong depending on the commonness.
+
+[Social Network Analysis](https://www.youtube.com/watch?v=0xsM0MbRPGE)
+
+# Using R to Analyze COVID-19
+
+In the video, the presentor suggests a few factors to be checked in the case of corona virus. Firstly, the data from Johns Hopkins University is imported and the data is cleared from unclear values such as death column being either 0 or the date of death. It's instead turned into a 1 or a 0 and NA values are eliminated by na.rm argument. Right after, the presentor checks if age and gender are a significant factor in the death rate. Presentor checks this claim with t test to see if both are significant. ttest function shows that it is indeed significant when it comes to age and older population is in higher risk. With gender, presentor utilizes the t test again to find out that male population is in a greater risk than the female, so it is also significant.
+
+[COVID-19](https://www.youtube.com/watch?v=D_CNmYkGRUc)
+
+# A Data Analysis and Visualization of Music Chart History
+
+For me, this topic has great importance as I'm obssessed with following music charts and records set by musicians. Admiring the success of an artist that I listen to gives me power to be successful in my respective profession. In this study, Rstudio is used to calculate several measures such as song lenth, the weeks spent in the top segment, the velocity of the songs reaching the top and more. Importing the chart data allows the user to compare several characteristics such as song year and song length with each other. This insight provides useful information about the industry. For instance, ever since streaming started, song lengths started to decrease as an outcome of the consumer culture. With streaming, any song is free to listen and there's not a need to buy a song or an album individually. To count the streams, the song has to be listened until it's finished. That's why songs are a lot shorter than they were before. After the basic analysis, one can see how the sales are divided between each type of consuming. This insight provides the industry an insight of which type is more profitable. For example, pure sales are usually lower than streams, but they offer more profit as the weights of 1 copy differ from each type of consuming. Subsetting, benchmark, ddply, lattice, plyr, and xtable functions are used to calculate such measures in the project.
+
+[Music Chart History](https://rstudio-pubs-static.s3.amazonaws.com/9904_8793c74e535344f2abbaf87779668873.html)
