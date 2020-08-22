@@ -1,2 +1,2 @@
 # Assignment 1
-[RMarkdown Homework](file:///C:/Users/w%C4%B1n/Desktop/Books/Assignment-1.html)
+[RMarkdown Homework](https://github.com/pjournal/boun01-cagataynufer/Assignment-1.html)
