@@ -1,0 +1,150 @@
+---
+title: "Assignment 2 - Electricity Prices"
+author: "Çağatay Nüfer"
+date: "25 08 2020"
+output: html_document
+---
+# Electricity Prices of Turkey
+This study analyzes the electricity prices of Turkey. The connection between mcp and smp prices, the forecasted demand for electricity and the real demand is studied to reach a meaningful conclusion of the electricity consumption in Turkey.
+
+# Packages
+There are several packages used to arrange, visualize, calculate the relative data.
+```{r,warning = FALSE,message = FALSE}
+library(purrr)
+library(ggplot2)
+library(ggthemes)
+library(lubridate)
+library(dplyr)
+library(data.table)
+
+```
+# Data Rearrangement, Calculations, and Visualization
+
+
+```{r,warning = FALSE,message = FALSE}
+electricity_data <- read.csv("C:/Users/PC/Downloads/ptf-smf.csv")
+```
+  
+Checking the preview of the data
+
+```{r,warning = FALSE,message = FALSE}
+glimpse(electricity_data)
+```
+
+As it's seen from the glimpse function, some of the column names should be changed due to simplicity and language integrity. In addition, to observe the data based on date, a necessary time series conversion must be made.
+
+```{r,warning = FALSE,message = FALSE}
+elec_final<-electricity_data %>%
+  
+  rename(
+    
+    date= Date,
+    
+    mcp= MCP.,
+    
+    smp = SMP.,
+    
+    pip = Positive.Imbalance.Price..TL.MWh.,
+    
+    nip= Negative.Imbalance.Price..TL.MWh.,
+    
+    smp.bal = SMP.Direction
+  
+    
+  )
+  elec_smh <-elec_final %>%
+  mutate(smpmcp_diff= smp-mcp)%>%
+  
+  mutate(date,date_pos=as.POSIXct(factor(date), format="%d.%m.%y %H:%M"))%>%
+  
+  transmute(smp,mcp,date_fin=as_date(date_pos),day_week=wday(date_pos),hours=hour(date_pos),smpmcp_diff)
+
+
+```
+
+Checking the new arranged data frame
+
+```{r,warning = FALSE,message = FALSE}
+glimpse(elec_smh)
+```
+
+In order to understand the trend of the prices, smp and mcp, we first need to calculate the means of both based on time periods such as week days and hours. Days range from 1 to 7, from Sunday to Saturday respectively.
+
+```{r,warning = FALSE,message = FALSE}
+MeanbyDay<- elec_smh%>%
+  
+  group_by(day_week)%>%
+  
+  summarize(McpMeanDay = mean(mcp), SmpMeanDay = mean(smp), Diffsmpmcp= mean(smpmcp_diff),mcp,smp)
+
+MeanbyHour <- elec_smh%>%
+  group_by(hours)%>%
+  
+  summarize(McpMeanDay = mean(mcp), SmpMeanDay = mean(smp),Diffsmpmcp= mean(smpmcp_diff),mcp,smp)
+```   
+
+After calculating the means by the selected time period, the next logical step is to get a visual to interpret the data.
+```{r,warning = FALSE,message = FALSE}
+MeanbyDay%>%
+  ggplot(aes(day_week,McpMeanDay))+
+  theme_gdocs()+
+  labs(title="MCP Means Over the Week", x="Days", y="MCP Mean Value")+
+  geom_bar(stat="identity",fill="red")
+  
+MeanbyDay%>%
+  ggplot(aes(day_week,SmpMeanDay))+
+  theme_gdocs()+
+  labs(title="SMP Means Over the Week", x="Days", y="SMP Mean Value")+
+  geom_bar(stat="identity",fill="green")
+MeanbyDay%>%
+  ggplot(aes(day_week,Diffsmpmcp))+
+  theme_gdocs()+
+  labs(title="SMP-MCP Difference Means Over the Week", x="Days", y="SMP-MCP Difference Mean") +
+  geom_bar(stat="identity", fill="blue")
+```
+  
+From the difference bar plot, it's clearly seen that day 4, wednesday, seems to be an outlier in the data. On wednesday, mcp price is significantly higher than the smp price. This observation leads to the conclusion that on wednesdays, there is an energy surplus in the system. Forecasts for this day might be missing a link to the data. In whichever way the forecasts are made, several factors should be included to the forecast model for a better end result. On sundays, mondays, saturdays, and tuesdays, there's an energy deficit as the smp price is higher than the mcp price. However, there's no indication that there's a significant leap over the 3 day period. The forecast model could be improved to eliminate the deficit, however, the model's output seems to be in it's confidence intervals. On thursdays and fridays, there's an offsetting output as thursdays has a leading smp and fridays has a leading mcp.
+Again, the forecasted output is in the confidence intervals as there's no indication that it's an outlier such as the case on wednesday.
+```{r,warning = FALSE,message = FALSE}
+MeanbyHour%>%
+  ggplot(aes(hours,McpMeanDay))+
+  theme_gdocs()+
+  labs(title="MCP Means Over Hours", x="Hours", y="MCP Mean Value")+
+  geom_bar(stat="identity",fill="red")
+
+MeanbyHour%>%
+  ggplot(aes(hours,SmpMeanDay))+
+  theme_gdocs()+
+  labs(title="SMP Means Over Hours", x="Hours", y="SMP Mean Value")+
+  geom_bar(stat="identity",fill="green")
+MeanbyHour%>%
+  ggplot(aes(hours,Diffsmpmcp))+
+  theme_gdocs()+
+  labs(title="SMP-MCP Difference Means Over Hours", x="Hours", y="SMP-MCP Difference Mean") +
+  geom_bar(stat="identity", fill="blue")
+```
+
+From the bar plot, smp prices are lower than the mcp prices in general before noon, leading to the conclusion that there's an energy surplus before noon. After noon, however, has a considerably higher smp price. Between 12:00 and 19:00, there's a significant energy deficit. Again, for these hours, forecast model might be missing a few factors to consider in the calculation. A thorough research should be conducted for these hours to identify a factor.
+```{r,warning = FALSE,message = FALSE}
+elec_grouped <- elec_smh%>%
+  group_by(date_fin)%>%
+  summarize(meanmcp_date= mean(mcp), meansmp_date=mean(smp) )
+
+ggplot(elec_grouped, aes(date_fin)) +
+  
+  geom_line(aes(y = meansmp_date, colour = "red")) + 
+  geom_point(aes(y = meansmp_date, colour = "red"))+
+  geom_line(aes(y = meanmcp_date, colour = "blue"))+
+  geom_point(aes(y = meanmcp_date, colour = "blue"))+
+  theme_gdocs()+
+  labs(title="SMP and MCP Prices Over Days", x="Dates", y="Prices")+
+  scale_color_manual(name="Price",
+                     labels=c("SMP","MCP"),
+                     values=c("red","blue"))
+```
+  
+To see the direction of smp and mcp prices over July clearly, a line plot is required in which the two prices are both included. When the time period is selected as the whole month, the price change trend becomes visible more vividly. For the most days, smp price is higher than the mcp price. Moreover, as mentioned before, the outliers in the data are clearly shown on the plot. The forecast model for the demand obviously is missing a link between the factors. A deep study could unleash a potential for the forecast to forfeit the outliers from the data. Putting out better demand forecasts and offsetting the demand balance in result.
+
+
+
+
