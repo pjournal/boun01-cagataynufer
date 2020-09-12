@@ -1,0 +1,168 @@
+---
+title: 'Assignment: Esoph and Young People Survey'
+author: "Çağatay Nüfer"
+date: "12 09 2020"
+output: 
+  html_document:
+    theme: united
+    highlight: monochrome
+    toc: true
+    toc_float: false
+    toc_depth: 3
+    
+
+ 
+---
+# The Esoph Data
+In this report, (o)esophageal cancer is going be statistically analyzed to discover if it's related to age, alcohol and tobacco consumption. All three factors consist of different levels, partitioned into four or five levels. Necessary packages are set up and the data is read below.
+
+
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(data.table)
+library(dplyr)
+library(ggthemes)
+library(ggpubr)
+
+
+```
+
+Glimpse, and the summary of the data is available in the code below.
+
+```{r}
+data<-data.frame()
+data<-esoph
+
+glimpse(esoph)
+
+summary(esoph)
+
+```
+
+Renaming the columns,
+
+```{r}
+colnames(esoph)[1]  <- "Age"
+colnames(esoph)[2]  <- "Alcohol"
+colnames(esoph)[3]  <- "Tobacco"
+```
+
+### Data Analysis
+
+Factors in the data are grouped by other factors among the data to visually inspect the relation between the percentage of cancer cases.ncounts is divided by ncontrols to compute the percentage.
+```{r, message=FALSE,warning=FALSE}
+esoph<- esoph %>% group_by(Age)%>% mutate(total_casesA= sum(ncases),total_controlA=sum(ncontrols),age_group= 100*(ncases/ncontrols))
+esoph<- esoph %>% group_by(Alcohol)%>% mutate(total_casesAl= sum(ncases),total_controlAl=sum(ncontrols),alcohol_group= 100*(ncases/ncontrols))
+esoph<- esoph %>% group_by(Tobacco)%>% mutate(total_casesT= sum(ncases),total_controlT=sum(ncontrols),tobacco_group= 100*(ncases/ncontrols))
+
+
+```
+
+In the graph, the age groups 55-64 and 65-74 are the top tier in case of cancer percentage. The age groups 25-34 and 35-44 have significantly lower percentages.
+```{r}
+ggplot(esoph)+
+  geom_bar(aes(Age,age_group,fill=Age), stat="identity")+
+  labs(title="Age Groups by Cancer Case Percentage",x="Age Group",y="Cancer Percentage")+
+  theme(text=element_text(size=8))
+
+```
+
+In the graph, tobacco consumption of 30g+ is the top tier in case of cancer percentage. The result is unexpected as it's acknowledged that higher tobacco consumption has a higher risk of cancer but the results are not as proportional.
+```{r}
+ggplot(esoph)+
+  geom_bar(aes(Tobacco,tobacco_group,fill=Tobacco), stat="identity")+
+  labs(title="Tobacco Consumption by Cancer Case Percentage",x="Tobacco Consumption",y="Cancer Percentage")+
+  theme(text=element_text(size=8))
+```
+
+In the graph, 120g+ consumption of alcohol is the top tier in case of cancer percentage. From the graph, there seems to be a significance to cancer percentage as the cancer percentage seems proportional to the alcohol consumption.
+```{r}
+ggplot(esoph)+
+  geom_bar(aes(Alcohol,alcohol_group,fill=Alcohol), stat="identity")+
+  labs(title="Alcohol Consumption by Cancer Case Percentage",x="Alcohol Consumption",y="Cancer Percentage")+
+  theme(text=element_text(size=8))
+
+```
+
+To see the relation between the factors more vividly, faceting is used for the next graphs. After grouping the factors and faceting the graph, the cancer case percentage is clearly seen for every factor on different levels. The results are similar to the previous graphs, but more obvious.
+
+```{r, message=FALSE}
+grp_alc_age<-esoph%>% group_by(Age,Alcohol)%>% summarise(case_sum = sum(ncases), control_sum = sum(ncontrols),age_alc_perc=100*(case_sum/control_sum))
+ggplot(grp_alc_age)+
+  geom_bar(stat="identity",aes(Alcohol,age_alc_perc,fill=Alcohol))+
+  facet_grid(Age ~.)+
+  theme(text=element_text(size=8))+
+  labs(title="Alcohol Consumption of Different Age Groups by Cancer Percentage",x="Alcohol Consumption",y="Cancer Percentage")
+  
+grp_tob_age<-esoph%>% group_by(Age,Tobacco)%>% summarise(case_sum = sum(ncases), control_sum = sum(ncontrols),age_tob_perc=100*(case_sum/control_sum))
+ggplot(grp_tob_age)+
+  geom_bar(stat="identity",aes(Tobacco,age_tob_perc,fill=Tobacco))+
+  facet_grid(Age ~.)+
+  theme(text=element_text(size=8))+
+  labs(title="Tobacco Consumption of Different Age Groups by Cancer Percentage",x="Tobacco Consumption",y="Cancer Percentage")+
+  expand_limits(y = c(0, 100))
+
+```
+
+### The Linear Generalized Regression Model of the Data
+
+From the model, summary function shows that the first age group and alcohol consumption have the highest significance towards cancer percentage. The median value is -0.1154, which is close to zero, indicating that the model is valid and correct. The null deviance is higher than the residual deviance in the model, which indicates that the errors apply for a less amount of the deviance. This means that having multiple factors in the data actually provided a better result.
+
+
+```{r,message=FALSE}
+esoph<-esoph%>%
+  mutate(cancer_perc= ncases/ncontrols)
+relation_model<- glm(cancer_perc ~ Age+unclass(Alcohol)+unclass(Tobacco), data= esoph, family=quasibinomial)
+summary(relation_model)
+plot(relation_model)
+```
+
+# The Young People Survey Data
+
+In this part of the report, pca test and multidimensional scaling is going to be performed. Firstly, the data is read. Right after, the appropriate columns are selected and filtered to eliminate blank values. Lastly, it's transformed into tibble format.
+```{r, message=FALSE}
+responses<-read.csv("D:/wın/Documents/responses.csv",sep=",")
+response_selected<- responses[,1:50] %>%
+  filter(complete.cases(.))%>%
+  tibble::as_tibble()
+
+```
+### PCA Test
+
+PCA test is performed on the data and the result is plotted. From the graph, we can see the variance explained by components. The line shows that the first 10 components explains the variance by fifty percent. From the glimpse of the pca test, the effects of components can be examined separately between each other.
+```{r,message=FALSE}
+pca<-
+  response_selected[,sapply(response_selected,class)=="integer"]
+pca_test<-princomp(pca,cor=T)
+pca_test
+ggplot(data=data.frame(PC=1:length(pca_test$sdev),var_exp=cumsum(pca_test$sdev^2/sum(pca_test$sdev^2))),
+       aes(x=PC,y=var_exp)) + geom_line(color="lightblue") + geom_point(color="blue") + scale_y_continuous(labels = scales::percent,breaks=seq(0,1,length.out=11)) + scale_x_continuous(breaks=seq(0,135,by=5))+
+  labs(title="PCA Model",y="Variance Explained")+
+  theme_gdocs()
+
+```
+
+### Multidimensional Scaling
+
+In this part of the report, mds method is going to be conducted, using the correlation between factors to draw similarities in the data. Firstly, set.seed function is used to create production and the appropriate adjustion in the data is made.
+```{r}
+set.seed(100)
+mds <- 1 - cor(response_selected)
+```
+
+Multidimensional scaling is conducted and visualized below.
+```{r}
+mds_done <- cmdscale(mds,k=2)
+colnames(mds_done) <- c("A","B")
+print(mds_done)
+ggplot(data.frame(mds_done),aes(x=A,y=B)) + geom_text(label=rownames(mds_done),angle=45,size=3)
+
+```
+
+Multidimensional scaling provided the insight on what young people prefer, and which ones are close in preference to one another. We have some interesting insights on the graph, the category latino and fairy tales are preferred in common! While reading and hiphop are far away from each other, personally I felt insecure about this insight, and Cars category is also irrelevant to Romance, as it should. With Multidimensional Scaling, every category's relation with each other is crystal clear and easy to comment on.
+
+# References
+[IE48A Lecture Notes](https://mef-bda503.github.io/archive/fall17/files/intro_to_ml.html)
+
+[STHDA](http://www.sthda.com/english/wiki/correlation-test-between-two-variables-in-r)
